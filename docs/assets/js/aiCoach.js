@@ -303,6 +303,38 @@ function getMixingPathRecommendation(
     const difference =
         primaryDirection.difference;
 
+// ==========================================
+// V4.1 STEP 1.2.2
+// Path-aware safety check
+// ==========================================
+
+const channelToColor = {
+    R: "แดง",
+    G: "เขียว",
+    B: "น้ำเงิน"
+};
+
+const detectedColor =
+    channelToColor[channel];
+
+
+// ถ้าสีที่ AI วิเคราะห์ไม่ได้อยู่ใน Mixing Path
+// ห้ามส่งคำแนะนำให้เพิ่ม/ลดสีนั้นโดยตรง
+
+if (
+    detectedColor &&
+    !mixingPath.includes(detectedColor)
+) {
+
+    console.log(
+        "⚠️ AI Direction ไม่ตรงกับ Mixing Path:",
+        detectedColor,
+        mixingPath
+    );
+
+    return [];
+}
+
 
     // ======================================
     // ตรวจสอบเฉพาะสีที่อยู่ใน Mixing Path
@@ -897,6 +929,26 @@ const differences =
 
 const smartMixingPath =
     intelligentDirection.mixingPath;
+    // ==========================================
+// V4.1 STEP 1.2.3
+// ตรวจสอบว่า Direction อยู่ใน Mixing Path
+// ==========================================
+
+const directionColorMap = {
+    increase_red: "แดง",
+    decrease_red: "แดง",
+    increase_green: "เขียว",
+    decrease_green: "เขียว",
+    increase_blue: "น้ำเงิน",
+    decrease_blue: "น้ำเงิน"
+};
+
+const directionColor =
+    directionColorMap[primaryDirection.action];
+
+const directionAllowed =
+    !directionColor ||
+    mixingPath.includes(directionColor);
 
 
 // ==========================================
@@ -929,7 +981,8 @@ if (
 // ------------------------------------------
 
 else if (
-    primaryDirection.action === "increase_red"
+    primaryDirection.action === "increase_red" &&
+    directionAllowed
 ) {
 
     message +=
@@ -941,7 +994,8 @@ else if (
 }
 
 else if (
-    primaryDirection.action === "increase_green"
+    primaryDirection.action === "increase_green"&& 
+    directionAllowed
 ) {
 
     message +=
@@ -953,7 +1007,8 @@ else if (
 }
 
 else if (
-    primaryDirection.action === "increase_blue"
+    primaryDirection.action === "increase_blue"&& 
+    directionAllowed
 ) {
 
     message +=
@@ -970,7 +1025,8 @@ else if (
 // ------------------------------------------
 
 else if (
-    primaryDirection.action === "decrease_red"
+    primaryDirection.action === "decrease_red"&& 
+    directionAllowed
 ) {
 
     message +=
@@ -982,7 +1038,8 @@ else if (
 }
 
 else if (
-    primaryDirection.action === "decrease_green"
+    primaryDirection.action === "decrease_green"&& 
+    directionAllowed
 ) {
 
     message +=
@@ -994,7 +1051,8 @@ else if (
 }
 
 else if (
-    primaryDirection.action === "decrease_blue"
+    primaryDirection.action === "decrease_blue"&& 
+    directionAllowed
 ) {
 
     message +=
@@ -1002,6 +1060,17 @@ else if (
 
     message +=
         "💡 ลดสีน้ำเงินเล็กน้อย\n";
+
+}
+else if (
+    !directionAllowed
+) {
+
+    message +=
+        "🎨 ค่าที่ตรวจพบยังไม่สามารถแปลงเป็นสีผสมโดยตรงได้\n";
+
+    message +=
+        "💡 AI จะยึดตามสีที่อยู่ในเส้นทางการผสม\n";
 
 }
 

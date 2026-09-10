@@ -337,58 +337,299 @@ function getAdjacentColors(colorName) {
         || [];
 }
 // ==========================================
-// วิเคราะห์ชื่อสีจาก Hue
+// ColorSense AI V4.1
+// Master Color Calibration — 12 Color Wheel
 // ==========================================
 
-function getColorNameFromHue(hue) {
+const COLOR_CALIBRATION_12 = {
 
-    if (hue < 15 || hue >= 345) {
-        return "แดง";
+    "แดง": {
+        type: "primary",
+        rgb: { r: 255, g: 0, b: 0 }
+    },
+
+    "ม่วงแดง": {
+        type: "tertiary",
+        rgb: { r: 204, g: 0, b: 153 }
+    },
+
+    "ม่วง": {
+        type: "secondary",
+        rgb: { r: 153, g: 0, b: 153 }
+    },
+
+    "ม่วงน้ำเงิน": {
+        type: "tertiary",
+        rgb: { r: 102, g: 0, b: 153 }
+    },
+
+    "น้ำเงิน": {
+        type: "primary",
+        rgb: { r: 0, g: 51, b: 255 }
+    },
+
+    "เขียวน้ำเงิน": {
+        type: "tertiary",
+        rgb: { r: 0, g: 102, b: 0 }
+    },
+
+    "เขียว": {
+        type: "secondary",
+        rgb: { r: 0, g: 153, b: 0 }
+    },
+
+    "เขียวเหลือง": {
+        type: "tertiary",
+        rgb: { r: 102, g: 204, b: 0 }
+    },
+
+    "เหลือง": {
+        type: "primary",
+        rgb: { r: 255, g: 255, b: 0 }
+    },
+
+    "ส้มเหลือง": {
+        type: "tertiary",
+        rgb: { r: 255, g: 204, b: 0 }
+    },
+
+    "ส้ม": {
+        type: "secondary",
+        rgb: { r: 255, g: 153, b: 0 }
+    },
+
+    "ส้มแดง": {
+        type: "tertiary",
+        rgb: { r: 255, g: 102, b: 0 }
     }
 
-    if (hue < 30) {
-        return "ส้มแดง";
+};
+// ==========================================
+// ColorSense AI V4.1
+// STEP 1.2.3
+// Find Nearest Calibrated Color
+// ==========================================
+
+function getNearestCalibratedColor(r, g, b) {
+
+    let nearestColor = null;
+    let smallestDistance = Infinity;
+
+    for (const colorName in COLOR_CALIBRATION_12) {
+
+        const calibrated =
+            COLOR_CALIBRATION_12[colorName];
+
+        const cr = calibrated.rgb.r;
+        const cg = calibrated.rgb.g;
+        const cb = calibrated.rgb.b;
+
+        const distance = Math.sqrt(
+            Math.pow(r - cr, 2) +
+            Math.pow(g - cg, 2) +
+            Math.pow(b - cb, 2)
+        );
+
+        if (distance < smallestDistance) {
+
+            smallestDistance = distance;
+            nearestColor = colorName;
+
+        }
+
     }
 
-    if (hue < 45) {
-        return "ส้ม";
+    return {
+
+        color: nearestColor,
+
+        distance: smallestDistance
+
+    };
+
+}
+// ==========================================
+// RGB → HSV
+// ==========================================
+
+function rgbToHSV(r, g, b) {
+
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+
+    const delta = max - min;
+
+    let h = 0;
+
+    // ------------------------------
+    // Hue
+    // ------------------------------
+
+    if (delta !== 0) {
+
+        if (max === r) {
+
+            h = 60 * (
+                ((g - b) / delta) % 6
+            );
+
+        }
+
+        else if (max === g) {
+
+            h = 60 * (
+                ((b - r) / delta) + 2
+            );
+
+        }
+
+        else {
+
+            h = 60 * (
+                ((r - g) / delta) + 4
+            );
+
+        }
+
     }
 
-    if (hue < 60) {
-        return "ส้มเหลือง";
+    if (h < 0) {
+        h += 360;
     }
 
-    if (hue < 90) {
-        return "เหลือง";
+
+    // ------------------------------
+    // Saturation
+    // ------------------------------
+
+    const s =
+        max === 0
+            ? 0
+            : delta / max;
+
+
+    // ------------------------------
+    // Brightness / Value
+    // ------------------------------
+
+    const v = max;
+
+
+    return {
+
+        h: h,
+        s: s,
+        v: v
+
+    };
+
+}
+// ==========================================
+// วิเคราะห์ชื่อสีจาก RGB
+// Hue + Saturation + Brightness
+// ==========================================
+
+function getColorNameFromRGB(r, g, b) {
+
+    const hsv = rgbToHSV(r, g, b);
+
+    const hue = hsv.h;
+    const saturation = hsv.s;
+    const brightness = hsv.v;
+
+
+    // ======================================
+    // สีไม่มีความอิ่มตัวมาก
+    // ======================================
+
+    if (saturation < 0.10) {
+
+        if (brightness > 0.90) {
+            return "ขาว";
+        }
+
+        if (brightness < 0.20) {
+            return "ดำ";
+        }
+
+        return "เทา";
+
     }
 
-    if (hue < 120) {
-        return "เขียวเหลือง";
+
+    // ======================================
+    // สีอ่อนมาก
+    // ======================================
+
+    if (brightness > 0.80 && saturation < 0.40) {
+
+        // ชมพู
+        if (hue >= 315 || hue < 15) {
+            return "ชมพู";
+        }
+
+        // ฟ้าอ่อน
+        if (hue >= 180 && hue < 250) {
+            return "ฟ้าอ่อน";
+        }
+
+        // เขียวอ่อน
+        if (hue >= 90 && hue < 160) {
+            return "เขียวอ่อน";
+        }
+
+        // เหลืองอ่อน
+        if (hue >= 40 && hue < 90) {
+            return "เหลืองอ่อน";
+        }
+
+        // ส้มอ่อน
+        if (hue >= 15 && hue < 40) {
+            return "ส้มอ่อน";
+        }
+
+        // ม่วงอ่อน
+        if (hue >= 250 && hue < 315) {
+            return "ม่วงอ่อน";
+        }
+
     }
 
-    if (hue < 150) {
-        return "เขียว";
-    }
 
-    if (hue < 180) {
-        return "เขียวน้ำเงิน";
-    }
+    // ======================================
+    // สีชมพู
+    // ======================================
 
-    if (hue < 240) {
-        return "น้ำเงิน";
-    }
+    if (
+        hue >= 315 &&
+        hue < 350 &&
+        brightness > 0.65
+    ) {
 
-    if (hue < 270) {
-        return "ม่วงน้ำเงิน";
-    }
+        return "ชมพู";
 
-    if (hue < 300) {
-        return "ม่วง";
     }
+// ==========================================
+// V4.1 STEP 1.2.4
+// Master Calibration 12 Colors
+// ==========================================
 
-    if (hue < 345) {
-        return "ม่วงแดง";
-    }
+const calibratedColor =
+    getNearestCalibratedColor(
+        r,
+        g,
+        b
+    );
 
-    return "แดง";
+console.log(
+    "🎨 Calibrated Color:",
+    calibratedColor
+);
+
+return calibratedColor.color;
+
 }

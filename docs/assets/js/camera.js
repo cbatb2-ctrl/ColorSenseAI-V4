@@ -98,6 +98,8 @@ let currentB = 0;
 // สีต้นแบบ
 
 let referenceColor = null;
+let referenceLocked = false;
+let referenceColorName = null;
 
 // Attempt
 
@@ -379,29 +381,114 @@ function readCenterPixel(){
 // Reference Color
 // =============================================
 
-saveBtn.addEventListener("click",()=>{
+// =============================================
+// Reference Color
+// V4.0.3G — Lock Reference After First Save
+// =============================================
 
-    referenceColor={
+// =============================================
+// Reference Color
+// V4.0.3G — Lock Reference After First Save
+// =============================================
 
-        r:currentR,
-        g:currentG,
-        b:currentB
+saveBtn.addEventListener("click", () => {
+
+    // -----------------------------------------
+    // ป้องกันการตั้งสีต้นแบบซ้ำ
+    // -----------------------------------------
+
+    if (referenceLocked) {
+
+        console.log("🔒 Reference Color ถูกล็อกแล้ว");
+
+        return;
+
+    }
+
+
+    // -----------------------------------------
+    // บันทึกสีต้นแบบ
+    // -----------------------------------------
+
+    referenceColor = {
+
+        r: currentR,
+        g: currentG,
+        b: currentB
 
     };
+    // ==========================================
+// วิเคราะห์ชื่อสีต้นแบบ
+// ==========================================
 
-    referenceBox.style.background=
+referenceColorName =
+    getColorNameFromRGB(
+        currentR,
+        currentG,
+        currentB
+    );
 
+console.log(
+    "🎯 Reference Color Name:",
+    referenceColorName
+);
+
+
+    // -----------------------------------------
+    // แสดงสีต้นแบบ
+    // -----------------------------------------
+
+    referenceBox.style.background =
         `rgb(${currentR},${currentG},${currentB})`;
 
-    referenceText.innerHTML=
 
+    referenceText.innerHTML =
         `R : ${currentR}<br>
          G : ${currentG}<br>
          B : ${currentB}`;
 
-    recordBtn.disabled=false;
 
-    console.log("🎯 Reference Saved",referenceColor);
+    // -----------------------------------------
+    // เปิดปุ่มบันทึกผลการทดลอง
+    // -----------------------------------------
+
+    recordBtn.disabled = false;
+
+
+    // -----------------------------------------
+    // 🔒 ล็อกสีต้นแบบ
+    // -----------------------------------------
+
+    referenceLocked = true;
+
+
+    // -----------------------------------------
+    // ล็อกปุ่มตั้งสีต้นแบบ
+    // -----------------------------------------
+
+    saveBtn.disabled = true;
+
+    saveBtn.textContent =
+        "🔒 สีต้นแบบถูกตั้งแล้ว";
+
+
+    // -----------------------------------------
+    // Console
+    // -----------------------------------------
+
+    console.log(
+        "🎯 Reference Saved",
+        referenceColor
+    );
+
+    console.log(
+        "🔓 Record Button Enabled:",
+        !recordBtn.disabled
+    );
+
+    console.log(
+        "🔒 Reference Locked"
+    );
 
 });
 // =============================================
@@ -590,47 +677,40 @@ recordBtn.addEventListener("click",()=>{
 
     // บันทึกคะแนนรอบปัจจุบัน
     saveAttempt();
-    // ==========================================
+   // ==========================================
 // AI Coach
 // ==========================================
 
-if(attempt === 0){
+if (attempt === 0) {
 
     updateAICoach(
         rgbAttempt1,
         referenceColor,
         score1,
-        1
+        1,
+        referenceColorName
     );
 
 }
-else if(attempt === 1){
+else if (attempt === 1) {
 
     updateAICoach(
         rgbAttempt2,
         referenceColor,
         score2,
-        2
+        2,
+        referenceColorName
     );
 
 }
-else if(attempt === 2){
+else if (attempt === 2) {
 
     updateAICoach(
         rgbAttempt3,
         referenceColor,
         score3,
-        3
-    );
-
-}
-else if(attempt === 2){
-
-    updateAICoach(
-        rgbAttempt3,
-        referenceColor,
-        score3,
-        3
+        3,
+        referenceColorName
     );
 
 }
